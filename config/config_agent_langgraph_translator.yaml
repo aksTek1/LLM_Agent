@@ -1,0 +1,19 @@
+models:
+  llama3:
+    base_url: "http://127.0.0.1:11434"
+    temperature: 0.0
+    max_tokens: 2048
+
+embeddings:
+  chunk_size: 1000
+  chunk_overlap: 200
+
+
+num_retrieved_docs: 3
+
+#vector_store_dir: "{PROJECT_ROOT}/chroma_db"
+prompts_dir: "{PROJECT_ROOT}/prompts"
+prompt_name: "prompt_agent_langgraph_translator"
+#documents_dir: "{PROJECT_ROOT}/documents"
+
+target_language: "French"

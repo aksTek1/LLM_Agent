@@ -1,0 +1,3 @@
+translator:
+    system: "Only translate the given text from English to {target_language}. Do not add any annotation:"
+    human: "Translate {user_input}"

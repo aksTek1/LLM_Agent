@@ -1,9 +1,3 @@
-#from langchain.chains import RetrievalQA
-#from langchain_core.messages import AIMessage
-#from langgraph.prebuilt import ToolMessage
-#from langchain.prompts import PromptTemplate
-#from dataclasses import dataclass
-#from typing import Dict, List, Optional
 from typing import TypedDict, Annotated, Sequence, Literal
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import Graph, StateGraph, END
@@ -26,33 +20,10 @@ class ChatTranslationAgent:
 
 
     @traceable(project_name='LLM_Project_agent_translator')
-    #def create_translator_prompt(self, prompt_name: str = 'default') -> ChatPromptTemplate:
     def create_translator_prompt(self) -> ChatPromptTemplate:
-        '''
-        print(f'create_translator_prompt: {self.prompt_manager.get_prompt(self.prompt_name).
-                                        replace("{target_language}", self.target_language)}')
-        promptValue = (self.prompt_manager.get_prompt(self.prompt_name).
-                       replace("{target_language}", self.target_language))
-        promptValueList = list(promptValue)
-        print(f'create_translator_prompt promptValue: {promptValue}, \n type: {type(promptValueList)}')
-        #return ChatPromptTemplate.from_messages(self.prompt_manager.get_prompt(self.prompt_name).
-        #                                       replace("{target_language}", self.target_language))
-
-        promptValueList = [
-                            ("system",
-             f"You are a translator. Translate the given text from English to {self.config_manager.config['target_language']}. "
-             "Provide only the translated text without any additional explanation."),
-            ("human", "Good morning Madam, how are you?"),
-        ]
-
-        #return ChatPromptTemplate.from_messages(promptValueList)
-        #return ChatPromptTemplate(promptValue)
-        '''
         system_message = human_message = ""
         prompt_templates = self.prompt_manager.get_prompt(self.prompt_name).get('translator', {})
-        print(f"create_translator_prompt prompt_tuple_list:{prompt_templates}")
         for role, prompt_template_value in prompt_templates.items():
-            print(f"prompt_template_keys: {role}")
             if role == "system":
                 system_message = prompt_template_value.replace("{target_language}", self.target_language)
             if role == "human":
@@ -69,7 +40,6 @@ class ChatTranslationAgent:
 
     @traceable(project_name='LLM_Project_agent_translator')
     def should_continue(self, state: AgentState) -> Literal["get_input", "end"]:
-        '''Determine if the conversation should continue'''
         if not state["should_continue"]:
             return "end"
         return "get_input"
@@ -77,7 +47,6 @@ class ChatTranslationAgent:
 
     @traceable(project_name='LLM_Project_agent_translator')
     def get_input(self, state: AgentState) -> AgentState:
-        '''Get input from the user'''
         user_input = input("Enter text to translate (or 'quit'/'exit' to end): ")
 
         # Check for exit commands
@@ -131,12 +100,6 @@ class ChatTranslationAgent:
             if not translation_content.strip():
                 raise ValueError("received empty response message from LLM")
 
-            '''
-            # Extract the content from the response
-            # The response might be a string or a more complex object
-            translation_content = response.content if hasattr(response, 'content') else str(response)
-            print(f'response: {response.content}translated text: {translation_content}')
-            '''
             # Create a valid AIMessage
             translation_message = AIMessage(content=translation_content)
 
@@ -159,15 +122,11 @@ class ChatTranslationAgent:
         workflow = StateGraph(AgentState)
 
         #Add get input node
-        #print("create_workflow: adding get_input node with state: {workflow.nodes.get(state[\"messages\"])}")
-        print(f"create_workflow: adding get_input node with state: {workflow}")
         workflow.add_node("get_input", lambda state: self.get_input(state))
         # Add translation node
-        print(f"create_workflow: adding translate node with state: {workflow}")
         workflow.add_node("translate", lambda state: self.translate(state))
 
         # Set conditional edges
-        print(f"create_workflow: setting conditional edges with state: {workflow}")
         workflow.add_conditional_edges("get_input",
                                         self.should_continue,
                                         {
@@ -177,41 +136,17 @@ class ChatTranslationAgent:
         )
 
         # Add edge from translate back to the conditional
-        print("create_workflow: setting conditional edge back from translate to get_input")
         workflow.add_edge("translate", "get_input")
 
         # Set entry point
-        print("create_workflow: setting entry point get_input")
         workflow.set_entry_point("get_input")
-        #workflow.add_edge(START, "translate")
-
-        # Add end condition
-        #workflow.add_edge("translate", END)
 
         # Compile workflow
-        print("create_workflow: compile workflow")
         return workflow.compile()
 
-    '''
-    def process_text(self, text: str) -> str:
-        """Helper method to process a single text input"""
-        agent = self.create_workflow()
-
-        initial_state = {
-            "messages": [HumanMessage(content=text)],
-            "next": None
-        }
-
-        result = agent.invoke(initial_state)
-
-        # Return the last AI message
-        ai_messages = [msg for msg in result["messages"] if isinstance(msg, AIMessage)]
-        return ai_messages[-1].content if ai_messages else ""
-    '''
 
     @traceable(project_name='LLM_Project_agent_translator')
     def run_interactive(self):
-        '''Run the agent till user quits '''
         agent = self.create_workflow()
 
         # Initialize state
